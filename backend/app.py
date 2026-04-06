@@ -32,6 +32,12 @@ def create_app(config_name='development'):
 		return jsonify({"status": "ok", "message": "Server is running"}), 200
 
 	with app.app_context():
+		from backend.models.user import User
+		from backend.models.enrollment_sample import EnrollmentSample
+		from backend.models.biometric_profile import BiometricProfile
+		from backend.models.device import Device
+		from backend.models.login_log import LoginLog
+		from backend.models.session_event import SessionEvent
 		db.create_all()
 
 	return app
