@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+import datetime
 
 import numpy as np
 
@@ -13,7 +13,7 @@ class EnrollmentSample(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     feature_vector = db.Column(db.Text, nullable=False)
     raw_features = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     sample_index = db.Column(db.Integer, nullable=False)
 
     def to_dict(self):

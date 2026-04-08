@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Keystroke Collector Test</title>
+  <script src="device_fingerprint.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -36,6 +38,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="row">
     <label for="password-input">Type your password:</label>
@@ -74,6 +77,13 @@
         output.textContent = '';
       });
     });
+    // Temporary device fingerprint test
+    const fp = new DeviceFingerprint();
+    fp.getFingerprint().then(data => {
+      console.log('Device fingerprint:', data);
+      console.log('Device ID:', data.device_id);
+    });
   </script>
 </body>
+
 </html>

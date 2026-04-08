@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+import datetime
 
 from backend.app import db
 
@@ -13,8 +13,8 @@ class BiometricProfile(db.Model):
     sample_count = db.Column(db.Integer, default=0)
     threshold = db.Column(db.Float, nullable=False, default=30.0)
     is_trained = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
     last_updated_by_login = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):

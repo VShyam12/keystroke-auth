@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime
 
 from sqlalchemy.orm import relationship
 
@@ -13,8 +13,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
     failed_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
 
@@ -34,12 +34,12 @@ class User(db.Model):
         }
 
     def is_locked(self):
-        return self.locked_until is not None and self.locked_until > datetime.utcnow()
+        return self.locked_until is not None and self.locked_until > datetime.datetime.now(datetime.timezone.utc)
 
     def increment_failed_attempts(self):
         self.failed_attempts = (self.failed_attempts or 0) + 1
         if self.failed_attempts >= 5:
-            self.locked_until = datetime.utcnow() + timedelta(minutes=30)
+            self.locked_until = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
 
     def reset_failed_attempts(self):
         self.failed_attempts = 0

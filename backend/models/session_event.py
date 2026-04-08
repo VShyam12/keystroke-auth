@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from sqlalchemy import func
 
@@ -13,7 +13,7 @@ class SessionEvent(db.Model):
     session_id = db.Column(db.String(64), nullable=False, index=True)
     event_type = db.Column(db.String(50), nullable=False)
     event_detail = db.Column(db.String(200), nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), index=True)
     is_flagged = db.Column(db.Boolean, default=False)
     flag_reason = db.Column(db.String(200), nullable=True)
 

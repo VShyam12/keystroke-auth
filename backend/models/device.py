@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from backend.app import db
 
@@ -17,8 +17,8 @@ class Device(db.Model):
     screen_resolution = db.Column(db.String(20), nullable=True)
     timezone_offset = db.Column(db.Integer, nullable=True)
     is_trusted = db.Column(db.Boolean, default=False)
-    first_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    first_seen = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    last_seen = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     trust_granted_at = db.Column(db.DateTime, nullable=True)
     login_count = db.Column(db.Integer, default=1)
 
@@ -40,8 +40,8 @@ class Device(db.Model):
 
     def mark_trusted(self):
         self.is_trusted = True
-        self.trust_granted_at = datetime.utcnow()
+        self.trust_granted_at = datetime.datetime.now(datetime.timezone.utc)
 
     def update_last_seen(self):
-        self.last_seen = datetime.utcnow()
+        self.last_seen = datetime.datetime.now(datetime.timezone.utc)
         self.login_count = (self.login_count or 0) + 1

@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from backend.app import db
 
@@ -8,7 +8,7 @@ class LoginLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), index=True)
     ip_address = db.Column(db.String(45), nullable=True)
     device_id = db.Column(db.String(64), nullable=True)
     password_correct = db.Column(db.Boolean, nullable=False)
