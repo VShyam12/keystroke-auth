@@ -16,6 +16,7 @@ def create_app(config_name='development'):
 
 	from backend.config import config_map
 	from backend.routes import api
+	from backend.models.otp import OTPRecord
 
 	app = Flask(__name__)
 	app.config.from_object(config_map[config_name])

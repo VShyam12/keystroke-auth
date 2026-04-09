@@ -4,3 +4,4 @@ from backend.models.biometric_profile import BiometricProfile
 from backend.models.device import Device
 from backend.models.login_log import LoginLog
 from backend.models.session_event import SessionEvent
+from backend.models.otp import OTPRecord
