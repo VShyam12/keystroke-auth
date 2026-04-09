@@ -3,7 +3,7 @@ import random
 import string
 import warnings
 
-from backend.app import db
+from backend.extensions import db
 
 
 class OTPRecord(db.Model):

@@ -3,7 +3,7 @@ import datetime
 
 import numpy as np
 
-from backend.app import db
+from backend.extensions import db
 
 
 class EnrollmentSample(db.Model):

@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy import func
 
-from backend.app import db
+from backend.extensions import db
 
 
 class SessionEvent(db.Model):

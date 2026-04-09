@@ -1,7 +1,7 @@
 import json
 import datetime
 
-from backend.app import db
+from backend.extensions import db
 
 
 class BiometricProfile(db.Model):

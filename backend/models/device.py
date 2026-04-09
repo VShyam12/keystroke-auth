@@ -1,6 +1,6 @@
 import datetime
 
-from backend.app import db
+from backend.extensions import db
 
 
 class Device(db.Model):
