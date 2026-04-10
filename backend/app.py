@@ -3,7 +3,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from backend.extensions import db, bcrypt, jwt
+from backend.extensions import db, bcrypt, jwt, limiter
 
 
 def create_app(config_name='development'):
@@ -20,6 +20,7 @@ def create_app(config_name='development'):
 	db.init_app(app)
 	bcrypt.init_app(app)
 	jwt.init_app(app)
+	limiter.init_app(app)
 	CORS(app, resources={r"/*": {"origins": "*"}})
 
 	app.register_blueprint(api, url_prefix='/api')
