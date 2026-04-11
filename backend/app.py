@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from backend.extensions import db, bcrypt, jwt, limiter
@@ -21,7 +21,23 @@ def create_app(config_name='development'):
 	bcrypt.init_app(app)
 	jwt.init_app(app)
 	limiter.init_app(app)
-	CORS(app, resources={r"/*": {"origins": "*"}})
+	CORS(app,
+		 origins=["http://127.0.0.1:5500", 
+		           "http://localhost:5500"],
+		 allow_headers=["Content-Type", "Authorization"],
+		 methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		 supports_credentials=False)
+
+	@app.after_request
+	def add_cors_headers(response):
+		origin = request.headers.get('Origin', '')
+		if '5500' in origin or '5000' in origin:
+			response.headers['Access-Control-Allow-Origin'] = origin
+			response.headers['Access-Control-Allow-Headers'] = \
+				'Content-Type, Authorization'
+			response.headers['Access-Control-Allow-Methods'] = \
+				'GET, POST, PUT, DELETE, OPTIONS'
+		return response
 
 	app.register_blueprint(api, url_prefix='/api')
 
