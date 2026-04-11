@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - Session Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0A1628;
+            color: #FFFFFF;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #0A1628;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 170px;
+        }
+
+        .brand-name {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #C9A84C;
+            font-size: 18px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            position: relative;
+            color: #FFFFFF;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 0;
+        }
+
+        .nav-links a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 2px;
+            background: #C9A84C;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            transform: scaleX(1);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 360px;
+            justify-content: flex-end;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #C9A84C;
+            color: #0A1628;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-username {
+            color: #FFFFFF;
+            font-size: 14px;
+            max-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-gold-link {
+            color: #C9A84C;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 2px;
+        }
+
+        .nav-gold-link.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -4px;
+            height: 2px;
+            background: #C9A84C;
+        }
+
+        .logout-btn {
+            border: 1px solid #C9A84C;
+            color: #C9A84C;
+            background: transparent;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .page {
+            padding-top: 64px;
+            min-height: 100vh;
+            background: #0A1628;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 34px;
+            color: #FFFFFF;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .page-sub {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .status-panel {
+            text-align: right;
+        }
+
+        .status-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #34D399;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #22C55E;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8);
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.75);
+            }
+
+            70% {
+                box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .session-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .session-id {
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        #session-timer {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 34px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        .stat-value.gold {
+            color: #C9A84C;
+        }
+
+        .stat-value.green {
+            color: #1B8A5A;
+        }
+
+        .stat-value.red {
+            color: #DC2626;
+        }
+
+        .stat-sub {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+
+        .gold {
+            color: #C9A84C;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 55% 45%;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .section-title {
+            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .sub-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .sub-badge.green {
+            color: #1B8A5A;
+            background: rgba(27, 138, 90, 0.15);
+            border: 1px solid rgba(27, 138, 90, 0.35);
+        }
+
+        .sub-badge.red {
+            color: #DC2626;
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid rgba(220, 38, 38, 0.35);
+        }
+
+        .sub-badge.amber {
+            color: #D97706;
+            background: rgba(217, 119, 6, 0.15);
+            border: 1px solid rgba(217, 119, 6, 0.35);
+        }
+
+        .feed-wrap {
+            margin-top: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .feed-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .event-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .event-blue {
+            color: #2563EB;
+            background: rgba(37, 99, 235, 0.14);
+        }
+
+        .event-gold {
+            color: #C9A84C;
+            background: rgba(201, 168, 76, 0.14);
+        }
+
+        .event-purple {
+            color: #7C3AED;
+            background: rgba(124, 58, 237, 0.14);
+        }
+
+        .event-red {
+            color: #DC2626;
+            background: rgba(220, 38, 38, 0.14);
+        }
+
+        .event-amber {
+            color: #D97706;
+            background: rgba(217, 119, 6, 0.14);
+        }
+
+        .feed-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feed-title {
+            color: #FFFFFF;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .feed-detail {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .feed-time {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            padding-top: 2px;
+        }
+
+        .analysis-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .analysis-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .analysis-ok {
+            color: #1B8A5A;
+            background: rgba(27, 138, 90, 0.14);
+        }
+
+        .analysis-warn {
+            color: #D97706;
+            background: rgba(217, 119, 6, 0.14);
+        }
+
+        .analysis-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .analysis-title {
+            color: #FFFFFF;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .analysis-desc {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .analysis-status {
+            flex-shrink: 0;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 4px 8px;
+            margin-top: 1px;
+        }
+
+        .status-normal {
+            color: #1B8A5A;
+            background: rgba(27, 138, 90, 0.15);
+        }
+
+        .status-warn {
+            color: #D97706;
+            background: rgba(217, 119, 6, 0.15);
+        }
+
+        .status-bad {
+            color: #DC2626;
+            background: rgba(220, 38, 38, 0.15);
+        }
+
+        .verdict-card {
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(27, 138, 90, 0.4);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .verdict-title {
+            color: #1B8A5A;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .verdict-desc {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .verdict-score {
+            color: #FFFFFF;
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 14px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .flag-btn,
+        .dismiss-btn {
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .flag-btn {
+            border: 1px solid #DC2626;
+            background: transparent;
+            color: #DC2626;
+        }
+
+        .dismiss-btn {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.06);
+            color: #FFFFFF;
+        }
+
+        .score-card {
+            margin-bottom: 16px;
+        }
+
+        .score-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .score-track {
+            position: relative;
+            height: 16px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            overflow: visible;
+            margin-top: 34px;
+        }
+
+        .score-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 8px;
+            background: linear-gradient(to right, #1B8A5A, #D97706, #DC2626);
+            transition: width 0.5s ease;
+        }
+
+        .threshold {
+            position: absolute;
+            top: -24px;
+            width: 2px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .threshold .threshold-label {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .threshold.medium {
+            left: 35%;
+        }
+
+        .threshold.high {
+            left: 65%;
+        }
+
+        .zone-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .zone-low {
+            color: #1B8A5A;
+        }
+
+        .zone-medium {
+            color: #D97706;
+            text-align: center;
+            flex: 1;
+        }
+
+        .zone-high {
+            color: #DC2626;
+            text-align: right;
+        }
+
+        .score-status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+
+        .stat-icon {
+            font-size: 16px;
+        }
+
+        @media (max-width: 1120px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .navbar {
+                height: auto;
+                min-height: 64px;
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                row-gap: 10px;
+            }
+
+            .nav-links {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                gap: 16px;
+                padding-bottom: 6px;
+            }
+
+            .nav-right {
+                min-width: auto;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .page {
+                padding-top: 112px;
+            }
+
+            .container {
+                padding: 20px 16px 24px;
+            }
+
+            .header-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .status-panel {
+                text-align: left;
+                width: 100%;
+            }
+
+            .session-meta {
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 1L2 6V12C2 18.63 12 23 12 23S22 18.63 22 12V6L12 1Z" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 11L10.5 12.5L12 14L15 11" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="brand-name">SecureBank</span>
+        </div>
+
+        <nav class="nav-links">
+            <a href="home.html">Home</a>
+            <a href="transactions.html">Transactions</a>
+            <a href="transfer.html">Transfer</a>
+            <a href="documents.html">Documents</a>
+        </nav>
+
+        <div class="nav-right">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M15 17H20L18.6 15.6C18.2 15.2 18 14.67 18 14.1V11C18 7.69 15.31 5 12 5C8.69 5 6 7.69 6 11V14.1C6 14.67 5.78 15.2 5.38 15.6L4 17H9" stroke="#C9A84C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M10 19C10.46 20.18 11.65 21 13 21C14.35 21 15.54 20.18 16 19" stroke="#C9A84C" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+            <div class="avatar">S</div>
+            <span id="nav-username" class="nav-username">Shyam</span>
+            <a class="nav-gold-link active" href="security_dashboard.html">Security Center</a>
+            <button class="logout-btn" type="button" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <main class="page">
+        <div class="container">
+            <section class="header-row">
+                <div>
+                    <h1 class="page-title">Session Monitor</h1>
+                    <p class="page-sub">Real-time behavioral analysis of your current session</p>
+                </div>
+                <div class="status-panel">
+                    <div class="status-line">
+                        <span class="pulse-dot"></span>
+                        <span>Live</span>
+                    </div>
+                    <div class="session-meta">
+                        <div id="session-id" class="session-id">Session ID: --</div>
+                        <div id="session-timer">00:00</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stats-grid">
+                <article class="glass-card">
+                    <div class="stat-label"><span class="gold stat-icon">🕒</span><span>Session Duration</span></div>
+                    <div id="duration-display" class="stat-value">00:00</div>
+                    <div class="stat-sub">Minutes active</div>
+                </article>
+
+                <article class="glass-card">
+                    <div class="stat-label"><span class="gold stat-icon">⦿</span><span>Total Actions</span></div>
+                    <div id="action-count" class="stat-value">0</div>
+                    <div class="stat-sub">Events logged</div>
+                </article>
+
+                <article class="glass-card">
+                    <div class="stat-label"><span class="gold stat-icon">📈</span><span>Actions / Min</span></div>
+                    <div id="actions-per-min" class="stat-value gold">0.0</div>
+                    <div class="stat-sub">Current rate</div>
+                </article>
+
+                <article class="glass-card">
+                    <div class="stat-label"><span class="gold stat-icon">⚠</span><span>Anomaly Score</span></div>
+                    <div id="anomaly-score" class="stat-value green">0.00</div>
+                    <div class="stat-sub">Risk indicator</div>
+                </article>
+            </section>
+
+            <section class="glass-card score-card">
+                <div class="score-head">
+                    <h2 class="section-title">Behavioral Anomaly Score</h2>
+                    <div id="score-value" class="gold" style="font-size:16px;font-weight:700;">0.00 / 1.00</div>
+                </div>
+
+                <div style="position:relative;">
+                    <div class="score-track">
+                        <div id="score-bar" class="score-fill"></div>
+                    </div>
+                    <div class="threshold medium"><span class="threshold-label">MEDIUM</span></div>
+                    <div class="threshold high"><span class="threshold-label">HIGH</span></div>
+                </div>
+
+                <div class="zone-labels">
+                    <span class="zone-low">LOW</span>
+                    <span class="zone-medium">MEDIUM</span>
+                    <span class="zone-high">HIGH</span>
+                </div>
+
+                <div id="score-status" class="score-status" style="color:#1B8A5A;background:rgba(27,138,90,0.14);">Session Normal</div>
+            </section>
+
+            <section class="layout">
+                <article class="glass-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                        <h2 class="section-title">Live Activity Feed</h2>
+                        <span class="sub-badge green">Auto-updating</span>
+                    </div>
+                    <div id="event-feed" class="feed-wrap"></div>
+                </article>
+
+                <article class="glass-card">
+                    <h2 class="section-title" style="margin-bottom:14px;">Behavioral Analysis</h2>
+
+                    <div id="check-frequency" class="analysis-row"></div>
+                    <div id="check-events" class="analysis-row"></div>
+                    <div id="check-documents" class="analysis-row"></div>
+                    <div id="check-duration" class="analysis-row"></div>
+
+                    <div id="verdict-card" class="verdict-card">
+                        <div id="verdict-title" class="verdict-title">Session Normal</div>
+                        <div id="verdict-desc" class="verdict-desc">No suspicious activity detected.</div>
+                        <div id="verdict-score" class="verdict-score">0.00</div>
+                        <div class="btn-row">
+                            <button id="flag-btn" class="flag-btn" type="button">Flag Session</button>
+                            <button id="dismiss-btn" class="dismiss-btn" type="button">Dismiss</button>
+                        </div>
+                    </div>
+                </article>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/session_tracker.js"></script>
+    <script>
+        (function() {
+            var t = sessionStorage.getItem('auth_token');
+            if (!t || t === 'null' || t === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+
+        var sessionStart = Date.now();
+        var actionCount = 0;
+        var downloadCount = 0;
+        var events = [];
+        var sessionId = sessionStorage.getItem('session_id') || generateSessionId();
+        sessionStorage.setItem('session_id', sessionId);
+
+        var navUsername = document.getElementById('nav-username');
+        if (navUsername) {
+            navUsername.textContent = sessionStorage.getItem('username') || 'Shyam';
+        }
+
+        var sessionIdEl = document.getElementById('session-id');
+        if (sessionIdEl) {
+            sessionIdEl.textContent = 'Session ID: ' + sessionId;
+        }
+
+        setInterval(function() {
+            var elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+            var mins = Math.floor(elapsed / 60);
+            var secs = elapsed % 60;
+            var timeStr = (mins < 10 ? '0' : '') + mins + ':' +
+                          (secs < 10 ? '0' : '') + secs;
+            var timerEl = document.getElementById('session-timer');
+            var durationEl = document.getElementById('duration-display');
+            if (timerEl) timerEl.textContent = timeStr;
+            if (durationEl) durationEl.textContent = timeStr;
+        }, 1000);
+
+        function addEvent(type, description, detail) {
+            actionCount++;
+            if (type === 'document_download') downloadCount++;
+
+            var colors = {
+                'page_view': '#2563EB',
+                'button_click': '#C9A84C',
+                'api_call': '#7C3AED',
+                'transfer_initiated': '#DC2626',
+                'document_download': '#D97706'
+            };
+            var color = colors[type] || '#888';
+
+            var elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+            var mins = Math.floor(elapsed / 60);
+            var secs = elapsed % 60;
+            var timeStr = (mins < 10 ? '0' : '') + mins + ':' +
+                          (secs < 10 ? '0' : '') + secs;
+
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:12px;' +
+                'padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06)';
+            row.innerHTML =
+                '<div style="width:32px;height:32px;border-radius:50%;' +
+                'background:' + color + '22;color:' + color +
+                ';display:flex;align-items:center;justify-content:center;' +
+                'font-size:14px;flex-shrink:0">●</div>' +
+                '<div style="flex:1">' +
+                '<div style="color:#fff;font-size:13px;font-weight:600">' +
+                description + '</div>' +
+                '<div style="color:rgba(255,255,255,0.5);font-size:11px">' +
+                detail + '</div></div>' +
+                '<div style="color:rgba(255,255,255,0.4);font-size:11px;' +
+                'flex-shrink:0">' + timeStr + '</div>';
+
+            var feed = document.getElementById('event-feed');
+            if (feed) {
+                feed.insertBefore(row, feed.firstChild);
+                events.unshift({ type: type, description: description, detail: detail, time: timeStr });
+                if (feed.children.length > 20) {
+                    feed.removeChild(feed.lastChild);
+                }
+                if (events.length > 20) {
+                    events.pop();
+                }
+            }
+
+            updateStats();
+        }
+
+        function updateChecks(rate, score) {
+            var elapsed = Math.floor((Date.now() - sessionStart) / 60000);
+
+            var freqEl = document.getElementById('check-frequency');
+            if (freqEl) {
+                var freqOk = parseFloat(rate) <= 10;
+                freqEl.innerHTML = getCheckHTML(
+                    freqOk,
+                    'Action Frequency',
+                    rate + ' actions/min — ' +
+                    (freqOk ? 'Within normal range' : 'Elevated!')
+                );
+            }
+
+            var eventsEl = document.getElementById('check-events');
+            if (eventsEl) {
+                var eventsOk = actionCount <= 50;
+                eventsEl.innerHTML = getCheckHTML(
+                    eventsOk,
+                    'Event Count',
+                    actionCount + ' events — ' +
+                    (eventsOk ? 'Normal for session length' : 'Excessive!')
+                );
+            }
+
+            var docsEl = document.getElementById('check-documents');
+            if (docsEl) {
+                var docsOk = downloadCount <= 3;
+                docsEl.innerHTML = getCheckHTML(
+                    docsOk,
+                    'Document Access',
+                    downloadCount + ' downloads — ' +
+                    (docsOk ? 'Normal' : 'Multiple downloads detected!')
+                );
+            }
+
+            var durationEl = document.getElementById('check-duration');
+            if (durationEl) {
+                var durOk = elapsed <= 60;
+                durationEl.innerHTML = getCheckHTML(
+                    durOk,
+                    'Session Duration',
+                    elapsed + ' min — ' +
+                    (durOk ? 'Typical session length' : 'Extended session!')
+                );
+            }
+
+            var verdictCard = document.getElementById('verdict-card');
+            var verdictTitle = document.getElementById('verdict-title');
+            var verdictDesc = document.getElementById('verdict-desc');
+            var verdictScore = document.getElementById('verdict-score');
+
+            if (verdictCard && verdictTitle && verdictDesc && verdictScore) {
+                verdictScore.textContent = score.toFixed(2);
+                if (score >= 0.35) {
+                    verdictCard.style.border = '1px solid #DC262666';
+                    verdictTitle.style.color = '#DC2626';
+                    verdictTitle.textContent = 'Suspicious Activity Detected';
+                    verdictDesc.textContent =
+                        'Abnormal behavior patterns detected. Session is flagged for review.';
+                } else {
+                    verdictCard.style.border = '1px solid #1B8A5A66';
+                    verdictTitle.style.color = '#1B8A5A';
+                    verdictTitle.textContent = 'Session Normal';
+                    verdictDesc.textContent = 'No suspicious activity detected.';
+                }
+            }
+        }
+
+        function updateStats() {
+            var elapsedMinutes = Math.max((Date.now() - sessionStart) / 60000, 0.1);
+            var rate = (actionCount / elapsedMinutes).toFixed(1);
+
+            var countEl = document.getElementById('action-count');
+            var rateEl = document.getElementById('actions-per-min');
+            if (countEl) countEl.textContent = actionCount;
+            if (rateEl) rateEl.textContent = rate;
+
+            var anomalyScore = 0;
+            if (parseFloat(rate) > 10) anomalyScore += 0.35;
+            if (actionCount > 50) anomalyScore += 0.35;
+            if (downloadCount > 3) anomalyScore += 0.20;
+            anomalyScore = Math.min(anomalyScore, 1.0);
+
+            var scoreEl = document.getElementById('anomaly-score');
+            var scoreValEl = document.getElementById('score-value');
+            var scoreBar = document.getElementById('score-bar');
+            var statusEl = document.getElementById('score-status');
+
+            var scoreColor = anomalyScore < 0.35 ? '#1B8A5A' :
+                             anomalyScore < 0.65 ? '#D97706' : '#DC2626';
+
+            if (scoreEl) {
+                scoreEl.textContent = anomalyScore.toFixed(2);
+                scoreEl.style.color = scoreColor;
+            }
+            if (scoreValEl) {
+                scoreValEl.textContent = anomalyScore.toFixed(2) + ' / 1.00';
+                scoreValEl.style.color = scoreColor;
+            }
+            if (scoreBar) {
+                scoreBar.style.width = (anomalyScore * 100) + '%';
+            }
+            if (statusEl) {
+                if (anomalyScore >= 0.35) {
+                    statusEl.textContent = 'Suspicious Activity Detected';
+                    statusEl.style.background = '#DC262622';
+                    statusEl.style.color = '#DC2626';
+                } else {
+                    statusEl.textContent = 'Session Normal';
+                    statusEl.style.background = '#1B8A5A22';
+                    statusEl.style.color = '#1B8A5A';
+                }
+            }
+
+            updateChecks(rate, anomalyScore);
+        }
+
+        function getCheckHTML(isOk, title, desc) {
+            var icon = isOk ?
+                '<span style="color:#1B8A5A;font-size:18px">✓</span>' :
+                '<span style="color:#D97706;font-size:18px">⚠</span>';
+            var statusColor = isOk ? '#1B8A5A' : '#D97706';
+            var statusText = isOk ? 'NORMAL' : 'ELEVATED';
+            return '<div style="display:flex;align-items:center;gap:12px;width:100%">' +
+                icon + '<div style="flex:1">' +
+                '<div style="color:#fff;font-weight:700;font-size:13px">' +
+                title + '</div>' +
+                '<div style="color:rgba(255,255,255,0.6);font-size:12px">' +
+                desc + '</div></div>' +
+                '<span style="color:' + statusColor + ';font-size:11px;' +
+                'font-weight:700">' + statusText + '</span></div>';
+        }
+
+        function generateSessionId() {
+            return 'SB-' + Math.random().toString(36).substr(2, 6).toUpperCase() +
+                '-' + Date.now().toString(36).toUpperCase();
+        }
+
+        document.getElementById('flag-btn')
+            ?.addEventListener('click', function() {
+                logEvent('session_flagged', 'Manual flag by user');
+                alert('Session has been flagged for security review.');
+            });
+
+        document.getElementById('dismiss-btn')
+            ?.addEventListener('click', function() {
+                actionCount = 0;
+                downloadCount = 0;
+                updateStats();
+            });
+
+        setTimeout(function() {
+            addEvent('page_view', 'Viewed Home', '/home');
+            addEvent('api_call', 'Fetched account data', 'GET /api/bank/account');
+            addEvent('page_view', 'Viewed Transactions', '/transactions');
+            addEvent('page_view', 'Viewed Security Center', '/security');
+            addEvent('page_view', 'Opened Session Monitor', '/session_monitor');
+            updateStats();
+        }, 1000);
+
+        var eventTypes = [
+            ['page_view', 'Viewed Dashboard', '/home'],
+            ['api_call', 'Fetched transactions', 'GET /api/bank/transactions'],
+            ['button_click', 'Clicked Transfer', 'transfer_btn'],
+            ['api_call', 'Security check', 'GET /api/dashboard']
+        ];
+        var eventIndex = 0;
+
+        setInterval(function() {
+            var evt = eventTypes[eventIndex % eventTypes.length];
+            addEvent(evt[0], evt[1], evt[2]);
+            eventIndex++;
+        }, 10000);
+
+        window.addEventListener('load', function() {
+            var timerEl = document.getElementById('session-timer');
+            var durationEl = document.getElementById('duration-display');
+            if (timerEl) timerEl.textContent = '00:00';
+            if (durationEl) durationEl.textContent = '00:00';
+            updateStats();
+        });
+    </script>
+</body>
+
+</html>
