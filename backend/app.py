@@ -21,22 +21,28 @@ def create_app(config_name='development'):
 	bcrypt.init_app(app)
 	jwt.init_app(app)
 	limiter.init_app(app)
-	CORS(app,
-		 origins=["http://127.0.0.1:5500", 
-		           "http://localhost:5500"],
-		 allow_headers=["Content-Type", "Authorization"],
-		 methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-		 supports_credentials=False)
+	CORS(app, resources={r"/*": {"origins": "*"}})
+
+	@app.before_request
+	def handle_options():
+		from flask import make_response
+		if request.method == 'OPTIONS':
+			resp = make_response()
+			resp.headers['Access-Control-Allow-Origin'] = '*'
+			resp.headers['Access-Control-Allow-Headers'] = \
+				'Content-Type, Authorization, X-Requested-With'
+			resp.headers['Access-Control-Allow-Methods'] = \
+				'GET, POST, PUT, DELETE, OPTIONS'
+			resp.status_code = 200
+			return resp
 
 	@app.after_request
 	def add_cors_headers(response):
-		origin = request.headers.get('Origin', '')
-		if '5500' in origin or '5000' in origin:
-			response.headers['Access-Control-Allow-Origin'] = origin
-			response.headers['Access-Control-Allow-Headers'] = \
-				'Content-Type, Authorization'
-			response.headers['Access-Control-Allow-Methods'] = \
-				'GET, POST, PUT, DELETE, OPTIONS'
+		response.headers['Access-Control-Allow-Origin'] = '*'
+		response.headers['Access-Control-Allow-Headers'] = \
+			'Content-Type, Authorization, X-Requested-With'
+		response.headers['Access-Control-Allow-Methods'] = \
+			'GET, POST, PUT, DELETE, OPTIONS'
 		return response
 
 	app.register_blueprint(api, url_prefix='/api')

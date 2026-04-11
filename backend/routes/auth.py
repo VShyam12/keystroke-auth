@@ -183,7 +183,7 @@ def verify_otp():
         latest_otp_log.otp_verified = True
         db.session.commit()
 
-    token = create_access_token(identity=user_id)
+    token = create_access_token(identity=str(user_id))
     return jsonify({'status': 'granted', 'token': token, 'user_id': user_id}), 200
 
 
