@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - OTP Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F5F7FA;
+            color: #0A1628;
+        }
+
+        .page {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+        }
+
+        .left {
+            flex: 0 0 60%;
+            background: #0A1628;
+            position: relative;
+            padding: 34px 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .left::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(201, 168, 76, 0.08) 38px, rgba(201, 168, 76, 0.08) 39px),
+                repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(201, 168, 76, 0.08) 38px, rgba(201, 168, 76, 0.08) 39px);
+            pointer-events: none;
+        }
+
+        .left-inner {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-text {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 20px;
+            color: #C9A84C;
+            letter-spacing: 0.3px;
+        }
+
+        .hero {
+            max-width: 760px;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #FFFFFF;
+            font-size: 44px;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            max-width: 640px;
+        }
+
+        .explain-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 620px;
+        }
+
+        .warn-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .warn-title {
+            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .explain-list {
+            margin-left: 20px;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .explain-note {
+            color: #C9A84C;
+            font-size: 13px;
+        }
+
+        .left-bottom {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(201, 168, 76, 0.7);
+            font-size: 13px;
+        }
+
+        .right {
+            flex: 0 0 40%;
+            background: #F5F7FA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .right-wrap {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 8px 48px rgba(10, 22, 40, 0.10);
+            border-top: 3px solid #C9A84C;
+            padding: 44px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .lock-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+        }
+
+        .card h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 26px;
+            color: #0A1628;
+            margin-bottom: 6px;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: #6B7280;
+            margin-bottom: 16px;
+        }
+
+        .otp-box {
+            background: #FFF9E6;
+            border: 2px solid #C9A84C;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 12px;
+        }
+
+        .otp-label {
+            color: #6B7280;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        .otp-display {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+            font-size: 36px;
+            letter-spacing: 8px;
+            font-weight: 700;
+            color: #0A1628;
+            line-height: 1;
+            min-height: 40px;
+        }
+
+        .otp-valid {
+            margin-top: 8px;
+            color: #B45309;
+            font-size: 12px;
+        }
+
+        .countdown {
+            color: #6B7280;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .entry-label {
+            color: #6B7280;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .otp-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .otp-input {
+            width: 52px;
+            height: 60px;
+            border: 1px solid #0A1628;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0A1628;
+            background: #FFFFFF;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: #C9A84C;
+            background: #FFF9E6;
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.16);
+        }
+
+        .verify-btn {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #0A1628;
+            cursor: pointer;
+            background: linear-gradient(135deg, #C9A84C, #F0D080);
+        }
+
+        .verify-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .error {
+            display: none;
+            margin-top: 12px;
+            color: #DC2626;
+            font-size: 13px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 12px;
+            color: #6B7280;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        @media (max-width: 1100px) {
+            .page {
+                flex-direction: column;
+            }
+
+            .left,
+            .right {
+                flex: 1 1 auto;
+            }
+
+            html, body {
+                overflow: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="left">
+            <div class="left-inner">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 1L2 6V12C2 18.63 12 23 12 23S22 18.63 22 12V6L12 1Z" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M12 11L10.5 12.5L12 14L15 11" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <div class="logo-text">SecureBank</div>
+                </div>
+
+                <div class="hero">
+                    <h1>One More Step</h1>
+                    <p>Your login pattern looks slightly different. This extra step keeps your account safe.</p>
+
+                    <div class="explain-card">
+                        <div class="warn-row">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M12 2L22 20H2L12 2Z" stroke="#C9A84C" stroke-width="1.8"></path>
+                                <path d="M12 8V13" stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round"></path>
+                                <circle cx="12" cy="17" r="1" fill="#C9A84C"></circle>
+                            </svg>
+                            <div class="warn-title">Why am I seeing this?</div>
+                        </div>
+                        <ul class="explain-list">
+                            <li>Your typing rhythm was slightly different today</li>
+                            <li>We detected an unfamiliar device or location</li>
+                            <li>This is a normal security precaution</li>
+                        </ul>
+                        <div class="explain-note">This protects you even if someone knows your password</div>
+                    </div>
+                </div>
+
+                <div class="left-bottom">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+                        <path d="M8 10V7.5C8 5.29 9.79 3.5 12 3.5C14.21 3.5 16 5.29 16 7.5V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                    </svg>
+                    <span>Protected by behavioral AI</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="right">
+            <div class="right-wrap">
+                <div class="card">
+                    <div class="lock-circle" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="10" width="14" height="11" rx="2" stroke="#B45309" stroke-width="1.7"></rect>
+                            <path d="M8 10V7.5C8 5.29 9.79 3.5 12 3.5C14.21 3.5 16 5.29 16 7.5V10" stroke="#B45309" stroke-width="1.7" stroke-linecap="round"></path>
+                        </svg>
+                    </div>
+                    <h2>Verify Your Identity</h2>
+                    <div class="card-sub">Enter the verification code to continue</div>
+
+                    <div class="otp-box">
+                        <div class="otp-label">Your verification code:</div>
+                        <div id="otp-display" class="otp-display">------</div>
+                        <div class="otp-valid">Valid for 5 minutes</div>
+                    </div>
+
+                    <div id="countdown-text" class="countdown">4:59</div>
+                    <div class="entry-label">Enter your code below</div>
+
+                    <div class="otp-row">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+                        <input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+                    </div>
+
+                    <button id="verify-btn" class="verify-btn" type="button" disabled>Verify Identity</button>
+                    <div id="error-msg" class="error"></div>
+                    <a class="back-link" href="login.html">Back to Login</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        var storedOtp = sessionStorage.getItem('otp_code');
+        var storedUserId = sessionStorage.getItem('user_id');
+
+        var display = document.getElementById('otp-display');
+        if (display && storedOtp) {
+            display.textContent = storedOtp;
+        }
+
+        var secondsLeft = 300;
+        var timerInterval = setInterval(function() {
+            secondsLeft--;
+            var mins = Math.floor(secondsLeft / 60);
+            var secs = secondsLeft % 60;
+            var text = document.getElementById('countdown-text');
+            if (text) {
+                text.textContent = mins + ':' +
+                    (secs < 10 ? '0' : '') + secs;
+            }
+            if (secondsLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('verify-btn').disabled = true;
+                var err = document.getElementById('error-msg');
+                err.textContent = 'Code expired. Please login again.';
+                err.style.display = 'block';
+            }
+        }, 1000);
+
+        var inputs = document.querySelectorAll('.otp-input');
+        inputs.forEach(function(input, index) {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '')
+                    .slice(0, 1);
+                if (this.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                checkAllFilled();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var paste = (e.clipboardData || window.clipboardData)
+                    .getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                paste.split('').forEach(function(char, i) {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                checkAllFilled();
+            });
+        });
+
+        function checkAllFilled() {
+            var allFilled = Array.from(inputs)
+                .every(function(inp) { return inp.value.length === 1; });
+            document.getElementById('verify-btn').disabled = !allFilled;
+        }
+
+        document.getElementById('verify-btn')
+            .addEventListener('click', async function() {
+
+            var code = Array.from(inputs)
+                .map(function(inp) { return inp.value; }).join('');
+            var btn = document.getElementById('verify-btn');
+            var errorMsg = document.getElementById('error-msg');
+
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+            errorMsg.style.display = 'none';
+
+            try {
+                var response = await fetch(
+                    'http://127.0.0.1:5000/api/auth/otp/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: parseInt(storedUserId),
+                        otp_code: code
+                    })
+                });
+
+                var data = await response.json();
+
+                if (data.status === 'granted') {
+                    sessionStorage.setItem('auth_token', data.token);
+                    sessionStorage.setItem('user_id',
+                        String(data.user_id));
+                    window.location.replace('home.html');
+                } else {
+                    errorMsg.textContent =
+                        'Invalid code: ' + (data.reason || 'Try again');
+                    errorMsg.style.display = 'block';
+                    btn.textContent = 'Verify Identity';
+                    btn.disabled = false;
+                    inputs.forEach(function(inp) { inp.value = ''; });
+                    inputs[0].focus();
+                }
+            } catch(e) {
+                errorMsg.textContent = 'Connection error. Try again.';
+                errorMsg.style.display = 'block';
+                btn.textContent = 'Verify Identity';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
