@@ -554,9 +554,24 @@
                 var data = await response.json();
 
                 if (response.ok && data.user_id) {
-                    sessionStorage.setItem('user_id',
-                        String(data.user_id));
+                    sessionStorage.setItem('user_id', String(data.user_id));
                     sessionStorage.setItem('username', username);
+
+                    var tokenResponse = await fetch(
+                        'http://127.0.0.1:5000/api/auth/test-token', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            user_id: data.user_id,
+                            username: username
+                        })
+                    });
+
+                    var tokenData = await tokenResponse.json();
+                    if (tokenData.token) {
+                        sessionStorage.setItem('auth_token', tokenData.token);
+                    }
+
                     window.location.replace('enrollment.html');
                 } else {
                     errorMsg.textContent = data.message ||
@@ -1740,6 +1755,23 @@
                     if (response.ok && response.status === 201) {
                         // Store user_id and redirect to enrollment
                         sessionStorage.setItem('user_id', data.user_id);
+
+                        const tokenResponse = await fetch('http://127.0.0.1:5000/api/auth/test-token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                user_id: data.user_id,
+                                username: username
+                            })
+                        });
+
+                        const tokenData = await tokenResponse.json();
+                        if (tokenData.token) {
+                            sessionStorage.setItem('auth_token', tokenData.token);
+                        }
+
                         window.location.href = 'enrollment.html';
                     } else if (response.status === 409) {
                         showError('Username or email already exists. Please try different credentials.');
