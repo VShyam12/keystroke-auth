@@ -34,7 +34,7 @@ class User(db.Model):
         }
 
     def is_locked(self):
-        return self.locked_until is not None and self.locked_until > datetime.datetime.now(datetime.timezone.utc)
+        return self.locked_until is not None and self.locked_until > datetime.datetime.utcnow()
 
     def increment_failed_attempts(self):
         self.failed_attempts = (self.failed_attempts or 0) + 1

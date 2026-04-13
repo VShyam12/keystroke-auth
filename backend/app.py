@@ -43,6 +43,10 @@ def create_app(config_name='development'):
 			'Content-Type, Authorization, X-Requested-With'
 		response.headers['Access-Control-Allow-Methods'] = \
 			'GET, POST, PUT, DELETE, OPTIONS'
+		response.headers['X-Content-Type-Options'] = 'nosniff'
+		response.headers['X-Frame-Options'] = 'DENY'
+		response.headers['X-XSS-Protection'] = '1; mode=block'
+		response.headers['Referrer-Policy'] = 'strict-origin'
 		return response
 
 	app.register_blueprint(api, url_prefix='/api')

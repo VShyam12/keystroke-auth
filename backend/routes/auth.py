@@ -3,10 +3,8 @@ import warnings
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
-from backend.extensions import db, bcrypt
+from backend.extensions import db, bcrypt, limiter
 from backend.models.user import User
 from backend.models.login_log import LoginLog
 from backend.features.extractor import FeatureExtractor
@@ -15,10 +13,14 @@ from backend.ml.gaussian import GaussianKeystrokeProfile
 from backend.models.biometric_profile import BiometricProfile
 from backend.risk.scorer import RiskScorer
 from backend.otp.generator import OTPService
+from backend.security.audit import (
+    log_failed_login,
+    log_successful_login,
+    log_otp_failure
+)
 
 
 auth_bp = Blueprint('auth_bp', __name__)
-limiter = Limiter(key_func=get_remote_address)
 extractor = FeatureExtractor()
 device_analyzer = DeviceFingerprintAnalyzer()
 risk_scorer = RiskScorer()
@@ -26,6 +28,7 @@ otp_service = OTPService()
 
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("10 per hour")
 def register():
     data = request.get_json(silent=True) or {}
     username = data.get('username')
@@ -50,6 +53,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("20 per hour")
 def login():
     data = request.get_json(silent=True) or {}
     username = data.get('username')
@@ -70,6 +74,8 @@ def login():
     if not bcrypt.check_password_hash(user.password_hash, password):
         user.increment_failed_attempts()
         db.session.commit()
+        log_failed_login(user.id, 'invalid_password',
+            request.remote_addr)
         return jsonify({'status': 'denied', 'reason': 'invalid_password'}), 401
 
     user.reset_failed_attempts()
@@ -134,6 +140,8 @@ def login():
     db.session.commit()
 
     if risk_result['risk_level'] == 'LOW':
+        log_successful_login(user.id, 'LOW',
+            request.remote_addr)
         token = create_access_token(identity=str(user.id))
         return jsonify({
             'status': 'granted',
@@ -153,6 +161,8 @@ def login():
             'risk_level': risk_result.get('risk_level'),
         }), 202
 
+    log_failed_login(user.id, 'high_risk_denied',
+        request.remote_addr)
     return jsonify({
         'status': 'denied',
         'reason': 'high_risk',
@@ -162,16 +172,54 @@ def login():
 
 
 @auth_bp.route('/otp/verify', methods=['POST'])
+@limiter.limit("10 per hour")
 def verify_otp():
+    import hashlib
+    import time
+
+    # Replay protection - track used request signatures
+    _used_signatures = set()
+    _signature_expiry = {}
+
+    def check_replay(user_id, otp_code):
+        signature = hashlib.sha256(
+            f"{user_id}:{otp_code}:{int(time.time() // 30)}"
+            .encode()
+        ).hexdigest()
+
+        # Clean expired signatures (older than 60 seconds)
+        now = time.time()
+        expired = [s for s, t in _signature_expiry.items()
+                   if now - t > 60]
+        for s in expired:
+            _used_signatures.discard(s)
+            _signature_expiry.pop(s, None)
+
+        if signature in _used_signatures:
+            return False  # Replay detected
+
+        _used_signatures.add(signature)
+        _signature_expiry[signature] = now
+        return True
+
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id')
     otp_code = data.get('otp_code')
+
+    if not check_replay(data.get('user_id'),
+                        data.get('otp_code')):
+        return jsonify({
+            'status': 'denied',
+            'reason': 'replay_detected'
+        }), 429
 
     if not user_id or not otp_code:
         return jsonify({'status': 'denied', 'reason': 'missing_otp_fields'}), 400
 
     result = otp_service.verify_otp(user_id, otp_code)
     if not result.get('success'):
+        log_otp_failure(user_id, result.get('reason'),
+            request.remote_addr)
         return jsonify({'status': 'denied', 'reason': result.get('reason')}), 401
 
     latest_otp_log = (
@@ -183,6 +231,8 @@ def verify_otp():
         latest_otp_log.otp_verified = True
         db.session.commit()
 
+    log_successful_login(user_id, 'MEDIUM_OTP_VERIFIED',
+        request.remote_addr)
     token = create_access_token(identity=str(user_id))
     return jsonify({'status': 'granted', 'token': token, 'user_id': user_id}), 200
 
